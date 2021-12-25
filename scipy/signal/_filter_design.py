@@ -443,12 +443,17 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi, include_nyquist=Fal
         # if include_nyquist is true and whole is false, w should include end point
         w = np.linspace(0, lastpoint, N, endpoint=include_nyquist and not whole)
         if (a.size == 1 and N >= b.shape[0] and
-                sp_fft.next_fast_len(N) == N and
-                (b.ndim == 1 or (b.shape[-1] == 1))):
+                (b.ndim == 1 or (b.shape[-1] == 1)) and
+                (sp_fft.next_fast_len(N) == N or
+                 np.isrealobj(b) and np.isrealobj(a) and
+                 include_nyquist and not whole and
+                 sp_fft.next_fast_len(2*(N-1)) == 2*(N-1))):
             # if N is fast, 2 * N will be fast, too, so no need to check
             n_fft = N if whole else N * 2
             if np.isrealobj(b) and np.isrealobj(a):
                 fft_func = sp_fft.rfft
+                if include_nyquist and not whole:
+                    n_fft = 2*(N-1)
             else:
                 fft_func = sp_fft.fft
             h = fft_func(b, n=n_fft, axis=0)[:N]
