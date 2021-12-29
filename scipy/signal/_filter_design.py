@@ -442,11 +442,10 @@ def freqz(b, a=1, worN=512, whole=False, plot=None, fs=2*pi, include_nyquist=Fal
         lastpoint = 2 * pi if whole else pi
         # if include_nyquist is true and whole is false, w should include end point
         w = np.linspace(0, lastpoint, N, endpoint=include_nyquist and not whole)
-        if (a.size == 1 and N >= b.shape[0] and
-                sp_fft.next_fast_len(N) == N and
-                (b.ndim == 1 or (b.shape[-1] == 1))):
-            # if N is fast, 2 * N will be fast, too, so no need to check
-            n_fft = N if whole else N * 2
+        n_fft = N if whole else 2 * (N - 1) if include_nyquist else 2 * N
+        if (a.size == 1 and (b.ndim == 1 or (b.shape[-1] == 1))
+                and n_fft >= b.shape[0]
+                and n_fft > 0): # TODO: review threshold acc. to benchmark?
             if np.isrealobj(b) and np.isrealobj(a):
                 fft_func = sp_fft.rfft
             else:
